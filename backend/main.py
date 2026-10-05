@@ -6,11 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from auth import verify_password, create_access_token
+from middleware import LoggingMiddleware, AuthMiddleware
 
 # Load file .env
 load_dotenv(override=True)
 
 app = FastAPI(title="VapeBrianz API")
+
+
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -57,6 +64,50 @@ class ProductUpdate(BaseModel):
     category_id: Optional[int] = None
     price: Optional[float] = None
     stock: Optional[int] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# ==========================================
+# 0. ENDPOINT AUTH (LOGIN)
+# ==========================================
+@app.post("/auth/login")
+def login(body: LoginRequest):
+    # Cari user berdasarkan username
+    res = supabase.table("users").select("*").eq("username", body.username).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=401, detail="Username atau password salah")
+
+    user = res.data[0]
+
+    # Kolom password bisa bernama 'password' atau 'password_hash'
+    stored_password = user.get("password") or user.get("password_hash")
+    if not stored_password:
+        raise HTTPException(status_code=401, detail="Username atau password salah")
+
+    # Verifikasi password
+    if not verify_password(body.password, stored_password):
+        raise HTTPException(status_code=401, detail="Username atau password salah")
+
+    # Cek apakah user aktif (opsional, skip jika kolom tidak ada)
+    if user.get("is_active") is False:
+        raise HTTPException(status_code=403, detail="Akun tidak aktif. Hubungi administrator.")
+
+    # Buat JWT token
+    token = create_access_token({
+        "user_id": user["id"],
+        "username": user["username"],
+        "role": user.get("role", "kasir"),
+    })
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "username": user["username"],
+        "role": user.get("role", "kasir"),
+    }
 
 # ==========================================
 # 2. ENDPOINTS MASTER DATA

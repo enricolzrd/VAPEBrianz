@@ -1,0 +1,42 @@
+[2026-10-06 00:05:45] POST    /auth/login                         404 2ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:05:50] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:05:51] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:30] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:31] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:32] POST    /auth/login                         404 1ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:32] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:32] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:33] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:33] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:33] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:33] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:33] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:34] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:34] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:34] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:34] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:06:34] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /
+[AUTH] DITOLAK - Tidak ada token | GET /favicon.ico
+[2026-10-06 00:08:31] GET     /docs                               200 4ms ✓ | IP: 127.0.0.1
+[2026-10-06 00:08:32] GET     /openapi.json                       200 55ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /api/products
+1 change detected
+[2026-10-06 00:11:09] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:11:09] POST    /auth/login                         404 1ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:11:10] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:18:12] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:18:13] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:18:34] POST    /auth/login                         404 1ms ✗ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /
+[AUTH] DITOLAK - Tidak ada token | GET /favicon.ico
+[2026-10-06 00:21:25] POST    /auth/login                         404 1ms ✗ | IP: 127.0.0.1
+[2026-10-06 00:21:30] POST    /auth/login                         404 0ms ✗ | IP: 127.0.0.1
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+5 changes detected
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-06 00:27:17] POST    /auth/login                         200 1366ms ✓ | IP: 127.0.0.1
