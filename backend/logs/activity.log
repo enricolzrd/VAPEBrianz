@@ -40,3 +40,50 @@
 5 changes detected
 HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
 [2026-10-06 00:27:17] POST    /auth/login                         200 1366ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:18:01] POST    /auth/login                         401 1456ms ✗ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:18:47] POST    /auth/login                         401 922ms ✗ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:18:59] POST    /auth/login                         200 941ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:29:53] POST    /auth/login                         200 1220ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:35:36] POST    /auth/login                         401 1003ms ✗ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-16 16:35:45] POST    /auth/login                         200 767ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /
+[2026-10-21 21:28:05] GET     /docs                               200 1ms ✓ | IP: 127.0.0.1
+[2026-10-21 21:28:06] GET     /openapi.json                       200 26ms ✓ | IP: 127.0.0.1
+[2026-10-21 21:30:20] GET     /docs                               200 1ms ✓ | IP: 127.0.0.1
+[2026-10-21 21:30:20] GET     /openapi.json                       200 1ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | GET /
+[2026-10-21 21:32:00] GET     /docs                               200 1ms ✓ | IP: 127.0.0.1
+[2026-10-21 21:32:00] GET     /openapi.json                       200 58ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | POST /api/auth/register
+[AUTH] DITOLAK - Tidak ada token | GET /
+[2026-10-22 20:36:34] GET     /docs                               200 1ms ✓ | IP: 127.0.0.1
+[2026-10-22 20:36:34] GET     /openapi.json                       200 21ms ✓ | IP: 127.0.0.1
+[AUTH] DITOLAK - Tidak ada token | POST /api/auth/login
+[AUTH] DITOLAK - Tidak ada token | POST /api/auth/login
+[AUTH] DITOLAK - Tidak ada token | POST /api/auth/login
+[AUTH] DITOLAK - Tidak ada token | POST /api/auth/login
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-22 20:43:05] POST    /api/auth/login                     200 1546ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=id&username=eq.ilhamgod "HTTP/2 200 OK"
+HTTP Request: POST https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users "HTTP/2 401 Unauthorized"
+[2026-10-22 20:58:46] GET     /docs                               200 0ms ✓ | IP: 127.0.0.1
+[2026-10-22 20:58:46] GET     /openapi.json                       200 20ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-22 20:59:13] POST    /api/auth/login                     200 1319ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=id&username=eq.ilhamgod "HTTP/2 200 OK"
+HTTP Request: POST https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users "HTTP/2 401 Unauthorized"
+[AUTH] DITOLAK - Tidak ada token | GET /
+[2026-10-22 21:08:09] GET     /docs                               200 1ms ✓ | IP: 127.0.0.1
+[2026-10-22 21:08:09] GET     /openapi.json                       200 19ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=%2A&username=eq.brian "HTTP/2 200 OK"
+[2026-10-22 21:08:25] POST    /api/auth/login                     200 1469ms ✓ | IP: 127.0.0.1
+HTTP Request: GET https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users?select=id&username=eq.ilhamgod "HTTP/2 200 OK"
+HTTP Request: POST https://boiytrxiadrnvhqpzkam.supabase.co/rest/v1/users "HTTP/2 201 Created"
+[2026-10-22 21:08:49] POST    /api/auth/register                  200 976ms ✓ | IP: 127.0.0.1

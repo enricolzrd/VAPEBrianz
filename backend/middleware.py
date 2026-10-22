@@ -26,7 +26,8 @@ logger = logging.getLogger("vapebrianz")
 # ENDPOINT YANG TIDAK PERLU TOKEN (Public)
 # ==========================================
 PUBLIC_ROUTES = [
-    "/auth/login",
+    "/api/auth/login",
+    "/api/auth/register",
     "/docs",
     "/openapi.json",
     "/redoc",
