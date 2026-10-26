@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MasterCategory } from '@/lib/master-data'
 import { cn } from '@/lib/utils'
 import { CategoryFormModal } from './category-form-modal'
@@ -8,7 +8,6 @@ import { ConfirmDeleteModal } from './confirm-delete-modal'
 import { ActionBar, EmptyRow, RowActions, tdClass, thClass } from './table-parts'
 
 type CategoriesTabProps = {
-  categories: MasterCategory[]
   productCounts: Map<string, number>
   onAdd: (name: string) => void
   onRename: (id: string, name: string) => void
@@ -21,9 +20,29 @@ type ModalState =
   | { type: 'delete'; category: MasterCategory }
   | null
 
-export function CategoriesTab({ categories, productCounts, onAdd, onRename, onDelete }: CategoriesTabProps) {
+export function CategoriesTab({ productCounts, onAdd, onRename, onDelete }: CategoriesTabProps) {
+  const [categories, setCategories] = useState<MasterCategory[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<ModalState>(null)
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const token = localStorage.getItem('token')
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/categories', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const result = await response.json()
+        setCategories(result.data ?? [])
+      } catch (error) {
+        console.error('Gagal mengambil kategori:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   const query = search.trim().toLowerCase()
   const filtered = query ? categories.filter((c) => c.name.toLowerCase().includes(query)) : categories
@@ -54,7 +73,13 @@ export function CategoriesTab({ categories, productCounts, onAdd, onRename, onDe
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="py-8 text-center text-muted-foreground">
+                    Memuat kategori...
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
                 <EmptyRow colSpan={3} message={query ? `No categories match "${search.trim()}".` : 'No categories yet.'} />
               ) : (
                 filtered.map((c) => {
@@ -93,25 +118,10 @@ export function CategoriesTab({ categories, productCounts, onAdd, onRename, onDe
       </div>
 
       {modal?.type === 'add' && (
-        <CategoryFormModal
-          existingNames={existingNames}
-          onClose={() => setModal(null)}
-          onSubmit={(name) => {
-            onAdd(name)
-            setModal(null)
-          }}
-        />
+        <CategoryFormModal existingNames={existingNames} onClose={() => setModal(null)} onSubmit={(name) => { onAdd(name); setModal(null) }} />
       )}
       {modal?.type === 'edit' && (
-        <CategoryFormModal
-          category={modal.category}
-          existingNames={existingNames}
-          onClose={() => setModal(null)}
-          onSubmit={(name) => {
-            onRename(modal.category.id, name)
-            setModal(null)
-          }}
-        />
+        <CategoryFormModal category={modal.category} existingNames={existingNames} onClose={() => setModal(null)} onSubmit={(name) => { onRename(modal.category.id, name); setModal(null) }} />
       )}
       {modal?.type === 'delete' && (
         <ConfirmDeleteModal
@@ -119,23 +129,13 @@ export function CategoriesTab({ categories, productCounts, onAdd, onRename, onDe
           blocked={deleteCount > 0}
           message={
             deleteCount > 0 ? (
-              <>
-                <span className="font-medium text-foreground">{modal.category.name}</span> still has{' '}
-                {deleteCount} product{deleteCount > 1 ? 's' : ''}. Move or delete them before removing
-                this category.
-              </>
+              <><span className="font-medium text-foreground">{modal.category.name}</span> still has {deleteCount} product{deleteCount > 1 ? 's' : ''}. Move or delete them before removing this category.</>
             ) : (
-              <>
-                Delete the <span className="font-medium text-foreground">{modal.category.name}</span>{' '}
-                category? This cannot be undone.
-              </>
+              <>Delete the <span className="font-medium text-foreground">{modal.category.name}</span> category? This cannot be undone.</>
             )
           }
           onClose={() => setModal(null)}
-          onConfirm={() => {
-            onDelete(modal.category.id)
-            setModal(null)
-          }}
+          onConfirm={() => { onDelete(modal.category.id); setModal(null) }}
         />
       )}
     </div>

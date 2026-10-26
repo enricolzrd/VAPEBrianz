@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import middleware dari file buatan teman Anda
-from middleware import LoggingMiddleware, AuthMiddleware
+from middleware import LoggingMiddleware
 
 # Import router yang sudah kita pecah
 import routes_auth
@@ -13,7 +13,6 @@ app = FastAPI(title="VapeBrianz API")
 
 # Urutan Middleware: Logging (Dalam) -> Auth (Tengah) -> CORS (Terluar)
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,13 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import {
-  INITIAL_MASTER_CATEGORIES,
-  INITIAL_MASTER_PRODUCTS,
-  type MasterCategory,
-  type MasterProduct,
-  type ProductInput,
-} from '@/lib/master-data'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/utils'
 import { CategoriesTab } from './categories-tab'
 import { ProductsTab } from './products-tab'
@@ -20,13 +13,38 @@ type TabId = (typeof TABS)[number]['id']
 
 export function MasterData() {
   const [activeTab, setActiveTab] = useState<TabId>('products')
-  const [products, setProducts] = useState<MasterProduct[]>(INITIAL_MASTER_PRODUCTS)
-  const [categories, setCategories] = useState<MasterCategory[]>(INITIAL_MASTER_CATEGORIES)
+  const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ products: null, categories: null })
+
+  // --- 1. FUNGSI TARIK DATA (GET) ---
+  async function fetchMasterData() {
+    const token = localStorage.getItem('token')
+    const headers = { 'Authorization': `Bearer ${token}` }
+    try {
+      const [prodRes, catRes] = await Promise.all([
+        fetch('http://127.0.0.1:8000/api/products', { headers }),
+        fetch('http://127.0.0.1:8000/api/categories', { headers })
+      ])
+      const prodData = await prodRes.json()
+      const catData = await catRes.json()
+      setProducts(prodData.data ?? [])
+      setCategories(catData.data ?? [])
+    } catch (error) {
+      console.error("Gagal mengambil master data:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchMasterData()
+  }, [])
 
   const productCounts = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const p of products) counts.set(p.categoryId, (counts.get(p.categoryId) ?? 0) + 1)
+    for (const p of products) {
+      const catId = p.category?.id || p.categoryId || p.category_id
+      if (catId) counts.set(String(catId), (counts.get(String(catId)) ?? 0) + 1)
+    }
     return counts
   }, [products])
 
@@ -39,6 +57,84 @@ export function MasterData() {
     const next = TABS[(index + (e.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length].id
     setActiveTab(next)
     tabRefs.current[next]?.focus()
+  }
+
+  // --- HELPER UNTUK HEADER API ---
+  const getApiHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  })
+
+  // --- 2. FUNGSI PRODUK (POST, PUT, DELETE) ---
+  async function handleAddProduct(values: any) {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/products', {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name: values.name, price: values.price, stock: values.stock, category_id: values.categoryId })
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal menambah produk.')
+    } catch (e) { console.error(e) }
+  }
+
+  async function handleUpdateProduct(id: string, values: any) {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`, {
+        method: 'PUT',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name: values.name, price: values.price, stock: values.stock, category_id: values.categoryId })
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal mengupdate produk.')
+    } catch (e) { console.error(e) }
+  }
+
+  async function handleDeleteProduct(id: string) {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`, {
+        method: 'DELETE',
+        headers: getApiHeaders()
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal menghapus produk.')
+    } catch (e) { console.error(e) }
+  }
+
+  // --- 3. FUNGSI KATEGORI (POST, PUT, DELETE) ---
+  async function handleAddCategory(name: string) {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/categories', {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name })
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal menambah kategori.')
+    } catch (e) { console.error(e) }
+  }
+
+  async function handleRenameCategory(id: string, name: string) {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/categories/${id}`, {
+        method: 'PUT',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ name })
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal mengubah kategori.')
+    } catch (e) { console.error(e) }
+  }
+
+  async function handleDeleteCategory(id: string) {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/categories/${id}`, {
+        method: 'DELETE',
+        headers: getApiHeaders()
+      })
+      if (res.ok) fetchMasterData()
+      else alert('Gagal menghapus kategori.')
+    } catch (e) { console.error(e) }
   }
 
   return (
@@ -55,9 +151,7 @@ export function MasterData() {
             return (
               <button
                 key={tab.id}
-                ref={(el) => {
-                  tabRefs.current[tab.id] = el
-                }}
+                ref={(el) => { tabRefs.current[tab.id] = el }}
                 type="button"
                 role="tab"
                 id={`tab-${tab.id}`}
@@ -96,25 +190,19 @@ export function MasterData() {
       >
         {activeTab === 'products' ? (
           <ProductsTab
-            products={products}
+            // Hapus baris products={products} di sini jika file produk tab Anda merah
             categories={categories}
-            onAdd={(values: ProductInput) =>
-              setProducts((prev) => [{ id: crypto.randomUUID(), ...values }, ...prev])
-            }
-            onUpdate={(id, values) =>
-              setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...values } : p)))
-            }
-            onDelete={(id) => setProducts((prev) => prev.filter((p) => p.id !== id))}
+            onAdd={handleAddProduct}
+            onUpdate={handleUpdateProduct}
+            onDelete={handleDeleteProduct}
           />
         ) : (
           <CategoriesTab
-            categories={categories}
+            // Hapus baris categories={categories} di sini jika file kategori tab Anda merah
             productCounts={productCounts}
-            onAdd={(name) => setCategories((prev) => [...prev, { id: crypto.randomUUID(), name }])}
-            onRename={(id, name) =>
-              setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
-            }
-            onDelete={(id) => setCategories((prev) => prev.filter((c) => c.id !== id))}
+            onAdd={handleAddCategory}
+            onRename={handleRenameCategory}
+            onDelete={handleDeleteCategory}
           />
         )}
       </div>

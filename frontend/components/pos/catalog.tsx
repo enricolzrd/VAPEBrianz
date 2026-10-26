@@ -5,7 +5,7 @@ import { CATEGORIES, formatIDR, type Category, type Product } from '@/lib/pos-da
 import { cn } from '@/lib/utils'
 
 type CatalogProps = {
-  products: Product[]
+  products: Product[] // Dikembalikan agar menerima dari pos-dashboard
   cart: Record<string, number>
   search: string
   onSearchChange: (value: string) => void
@@ -23,6 +23,17 @@ export function Catalog({
   onCategoryChange,
   onAdd,
 }: CatalogProps) {
+
+  // Filter produk dengan pengamanan objek kategori
+  const filteredProducts = products.filter((product) => {
+    const categoryName = (product.category as any)?.name || product.category
+
+    const matchesCategory = category === 'All' || categoryName === category
+    const matchesSearch =
+      search === '' || product.name.toLowerCase().includes(search.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+
   return (
     <main className="flex min-w-0 flex-col lg:w-[70%] lg:overflow-hidden">
       <header className="sticky top-0 z-10 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur md:px-6">
@@ -46,7 +57,7 @@ export function Catalog({
             </div>
           </div>
           <p className="hidden text-xs text-muted-foreground sm:block">
-            {products.length} product{products.length === 1 ? '' : 's'}
+            {filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'}
           </p>
         </div>
 
@@ -102,14 +113,14 @@ export function Catalog({
       </header>
 
       <div className="flex-1 p-4 md:p-6 lg:overflow-y-auto">
-        {products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="flex h-48 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border text-center">
             <p className="text-sm font-medium">No products found</p>
             <p className="text-xs text-muted-foreground">Try another keyword or category.</p>
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <li key={product.id}>
                 <ProductCard product={product} inCart={cart[product.id] ?? 0} onAdd={onAdd} />
               </li>
@@ -151,7 +162,7 @@ function ProductCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {product.category}
+            {(product.category as any)?.name || product.category}
           </p>
           <p className="mt-1 text-sm font-medium leading-snug text-pretty">{product.name}</p>
         </div>
@@ -162,25 +173,23 @@ function ProductCard({
         )}
       </div>
 
-      <div className="mt-auto flex items-end justify-between gap-2">
-        <div>
-          <p className="font-mono text-base font-semibold">{formatIDR(product.price)}</p>
-          <p
-            className={cn(
-              'text-xs',
-              soldOut ? 'text-destructive' : lowStock ? 'text-amber-400' : 'text-muted-foreground',
-            )}
-          >
-            {soldOut ? 'Out of stock' : `Stock: ${product.stock}`}
-          </p>
-        </div>
-        <span
-          aria-hidden="true"
-          className="flex size-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground group-disabled:bg-secondary group-disabled:text-muted-foreground"
+      <div className="mt-auto flex flex-col items-start gap-1">
+        <p className="font-mono text-base font-semibold">{formatIDR(product.price)}</p>
+        <p
+          className={cn(
+            'text-xs',
+            soldOut ? 'text-destructive' : lowStock ? 'text-amber-400' : 'text-muted-foreground',
+          )}
         >
-          <Plus className="size-4" />
-        </span>
+          {soldOut ? 'Out of stock' : `Stock: ${product.stock}`}
+        </p>
       </div>
+      <span
+        aria-hidden="true"
+        className="mt-auto self-end flex size-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground group-disabled:bg-secondary group-disabled:text-muted-foreground"
+      >
+        <Plus className="size-4" />
+      </span>
       <span className="sr-only">Add {product.name} to cart</span>
     </button>
   )

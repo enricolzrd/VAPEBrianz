@@ -57,7 +57,10 @@ export async function apiFetch(
     headers["Authorization"] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  // Otomatis menambahkan /api jika endpoint lupa ditulis dengan /api
+  const cleanEndpoint = endpoint.startsWith("/api") ? endpoint : `/api${endpoint}`
+
+  const response = await fetch(`${BASE_URL}${cleanEndpoint}`, {
     ...options,
     headers,
   })
@@ -65,7 +68,9 @@ export async function apiFetch(
   // Jika token expired/invalid, paksa logout
   if (response.status === 401) {
     removeToken()
-    window.location.href = "/login"
+    if (typeof window !== "undefined") {
+      window.location.href = "/login"
+    }
   }
 
   return response
@@ -79,7 +84,8 @@ export async function loginUser(
   password: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    // PERBAIKAN 1: Menambahkan '/api' sebelum '/auth/login'
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -91,12 +97,21 @@ export async function loginUser(
       return { success: false, message: data.detail || "Login gagal" }
     }
 
+    // PERBAIKAN 2: Mengambil token sesuai dengan format return backend Anda.
+    // Jika backend mengembalikan field 'token', maka ganti menjadi data.token atau data.data.token
+    const token = data.token || data.access_token || (data.data && data.data.token)
+    const userData = data.user || data.data || { username, role: "user" }
+
+    if (!token) {
+      return { success: false, message: "Token tidak ditemukan dalam respon server" }
+    }
+
     // Simpan token dan data user
-    saveToken(data.access_token)
-    saveUser({ username: data.username, role: data.role })
+    saveToken(token)
+    saveUser({ username: userData.username, role: userData.role || "user" })
 
     return { success: true }
-  } catch {
+  } catch (error) {
     return { success: false, message: "Tidak dapat terhubung ke server" }
   }
 }

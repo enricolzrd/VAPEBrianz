@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { loginUser } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,16 +15,51 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const result = await loginUser(username, password)
+    try {
+      // Kembalikan ke format JSON
+      const response = await fetch('http://127.0.0.1:8000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      })
 
-    if (result.success) {
-      router.push('/')
-      router.refresh()
-    } else {
-      setError(result.message || 'Login gagal')
+      const data = await response.json()
+
+      if (response.ok) {
+        // Ambil token dari berbagai kemungkinan struktur data FastAPI Anda
+        const tokenAsli = 
+          data.access_token || 
+          data.token || 
+          data.data?.access_token || 
+          data.data?.token ||
+          data.data; // Jika backend langsung mengirim {"data": "eyJhbG..."}
+
+        // JIKA TOKEN MASIH KOSONG, TAHAN LAYAR AGAR TIDAK KEDIP
+        if (!tokenAsli || tokenAsli === 'undefined') {
+          alert("Struktur API salah! Isi dari backend: " + JSON.stringify(data))
+          setLoading(false)
+          return 
+        }
+
+        // Jika token benar-benar ada, baru simpan dan pindah halaman
+        localStorage.setItem('token', tokenAsli)
+        document.cookie = `token=${tokenAsli}; path=/; max-age=86400`
+        window.location.href = '/'
+        
+      } else {
+        setError(data.detail || 'Login gagal. Periksa username dan password Anda.')
+      }
+    } catch (err) {
+      console.error('Error jaringan:', err)
+      setError('Gagal terhubung ke server backend.')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (

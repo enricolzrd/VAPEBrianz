@@ -1,5 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel
+from decimal import Decimal
 
 class ProductCreate(BaseModel):
     category_id: int
@@ -12,9 +13,8 @@ class CartItem(BaseModel):
     quantity: int
 
 class TransactionCreate(BaseModel):
-    user_id: int = 1  # Default Kasir (ID 1 = brian)
     customer_name: Optional[str] = None
-    discount_amount: float = 0
+    discount_amount: Decimal = Decimal("0") # Beri default 0 agar tidak wajib diisi jika tidak ada diskon
     payment_method: str
     cart_items: List[CartItem]
 
@@ -31,7 +31,6 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-# Tambahan model untuk fitur Register baru
 class RegisterRequest(BaseModel):
     username: str
     password: str

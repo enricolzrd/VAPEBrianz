@@ -14,14 +14,22 @@ const METHOD_ICONS: Record<PaymentMethod, typeof Banknote> = {
 type PaymentModalProps = {
   total: number
   itemCount: number
+  cartItems: { product_id: number; quantity: number }[]
   onClose: () => void
-  onConfirm: (details: { customerName: string; discount: number; method: PaymentMethod }) => void
+  onConfirm: () => void
 }
 
-export function PaymentModal({ total, itemCount, onClose, onConfirm }: PaymentModalProps) {
+export function PaymentModal({
+  total,
+  itemCount,
+  cartItems,
+  onClose,
+  onConfirm,
+}: PaymentModalProps) {
   const [customerName, setCustomerName] = useState('')
   const [discountInput, setDiscountInput] = useState('')
   const [method, setMethod] = useState<PaymentMethod>('Cash')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
   const titleId = useId()
 
@@ -43,9 +51,41 @@ export function PaymentModal({ total, itemCount, onClose, onConfirm }: PaymentMo
     }
   }, [])
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    onConfirm({ customerName: customerName.trim(), discount, method })
+    setIsSubmitting(true)
+
+    const token = localStorage.getItem('token')
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          customer_name: customerName.trim(),
+          discount_amount: discount,
+          payment_method: method,
+          cart_items: cartItems,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(`Sukses! Invoice: ${result.invoice_number}`)
+        onConfirm()
+      } else {
+        const errorData = await response.json()
+        alert(`Gagal: ${errorData.detail ?? 'Terjadi kesalahan'}`)
+      }
+    } catch (error) {
+      console.error('Error jaringan', error)
+      alert('Gagal me-proses pembayaran. Periksa koneksi jaringan Anda.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -174,9 +214,10 @@ export function PaymentModal({ total, itemCount, onClose, onConfirm }: PaymentMo
 
           <button
             type="submit"
-            className="h-12 rounded-xl bg-primary text-sm font-bold tracking-wide text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98]"
+            disabled={isSubmitting}
+            className="h-12 rounded-xl bg-primary text-sm font-bold tracking-wide text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Confirm Payment
+            {isSubmitting ? 'Processing...' : 'Confirm Payment'}
           </button>
         </form>
       </div>

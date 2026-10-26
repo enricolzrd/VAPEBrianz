@@ -1,30 +1,34 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Route yang tidak perlu login
-const PUBLIC_ROUTES = ['/login']
-
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  // Ambil token dari Cookies yang diset dari halaman login
+  const token = request.cookies.get('token')?.value
+  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
 
-  // Lewati public routes
-  if (PUBLIC_ROUTES.includes(pathname)) {
-    return NextResponse.next()
+  // Jika tidak ada token dan user mencoba mengakses dashboard, tendang ke login
+  if (!token && !isLoginPage) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Cek token di cookie (disimpan saat login)
-  const token = request.cookies.get('vb_token')?.value
-
-  // Tidak ada token → redirect ke login
-  if (!token) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+  // Jika sudah ada token tapi user mencoba masuk ke halaman login, tendang ke dashboard
+  if (token && isLoginPage) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()
 }
 
+// Konfigurasi ini menentukan rute Next.js mana saja yang dijaga oleh middleware
 export const config = {
-  // Middleware berjalan di semua route kecuali asset statis
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.svg|.*\\.jpg).*)'],
+  matcher: [
+    /*
+     * Mengecek semua rute halaman kecuali:
+     * - api (API routes frontend)
+     * - _next/static (file statis)
+     * - _next/image (optimasi gambar)
+     * - favicon.ico (ikon web)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }

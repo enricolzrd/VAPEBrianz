@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatIDR } from '@/lib/pos-data'
 import { SAMPLE_TODAY, shiftDate, type Transaction } from '@/lib/transactions-data'
 import { DateFilter, type DatePreset } from './date-filter'
@@ -20,10 +20,44 @@ function rangeForPreset(preset: Exclude<DatePreset, 'custom'>) {
   }
 }
 
-export function TransactionHistory({ transactions }: { transactions: Transaction[] }) {
+export function TransactionHistory() {
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [preset, setPreset] = useState<DatePreset>('7d')
   const [range, setRange] = useState(() => rangeForPreset('7d'))
   const [selected, setSelected] = useState<Transaction | null>(null)
+
+  // Ambil riwayat dari API backend FastAPI beserta token kasir dari localStorage
+ useEffect(() => {
+    async function fetchTransactions() {
+      const token = localStorage.getItem('token')
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/transactions', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        const result = await response.json()
+        
+        // --- BAGIAN YANG DIUBAH ---
+        const mappedData = (result.data ?? []).map((trx: any) => ({
+          ...trx,
+          date: trx.created_at,    // Menyesuaikan kolom tanggal backend
+          total: trx.total_amount, // Menyesuaikan kolom total backend
+          method: trx.payment_method,
+        }))
+        
+        setTransactions(mappedData)
+        // --------------------------
+
+      } catch (error) {
+        console.error('Gagal menarik data transaksi:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTransactions()
+  }, [])
 
   const filtered = useMemo(
     () =>
@@ -87,7 +121,13 @@ export function TransactionHistory({ transactions }: { transactions: Transaction
           ))}
         </dl>
 
-        <TransactionsTable transactions={filtered} onSelect={setSelected} />
+        {loading ? (
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            Memuat data transaksi...
+          </div>
+        ) : (
+          <TransactionsTable transactions={filtered} onSelect={setSelected} />
+        )}
       </div>
 
       {selected && (

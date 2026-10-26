@@ -1,9 +1,8 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, ShoppingBag } from 'lucide-react'
 import {
-  INITIAL_PRODUCTS,
   formatIDR,
   type CartItem,
   type Category,
@@ -17,12 +16,10 @@ import { Sidebar } from './sidebar'
 
 type SaleNotice = {
   total: number
-  method: PaymentMethod
-  customerName: string
 }
 
 export function PosDashboard() {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS)
+  const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<Record<string, number>>({})
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<Category>('All')
@@ -30,6 +27,27 @@ export function PosDashboard() {
   const [notice, setNotice] = useState<SaleNotice | null>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cartRef = useRef<HTMLElement>(null)
+
+  // Fungsi untuk mengambil data produk dari FastAPI dengan Token JWT
+  const fetchProducts = useCallback(async () => {
+    const token = localStorage.getItem('token') // Ambil token dari browser
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/products', {
+        headers: {
+          'Authorization': `Bearer ${token}` // Lampirkan token ke backend
+        }
+      })
+      const result = await response.json()
+      setProducts(result.data ?? [])
+    } catch (error) {
+      console.error('Gagal menarik data produk:', error)
+    }
+  }, [])
+
+  // Tarik data produk otomatis saat komponen dimuat
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -44,7 +62,7 @@ export function PosDashboard() {
     () =>
       Object.entries(cart)
         .map(([id, quantity]) => {
-          const product = products.find((p) => p.id === id)
+          const product = products.find((p) => String(p.id) === String(id))
           return product ? { product, quantity } : null
         })
         .filter((item): item is CartItem => item !== null),
@@ -76,73 +94,76 @@ export function PosDashboard() {
     })
   }
 
-  function handleConfirmPayment(details: {
-    customerName: string
-    discount: number
-    method: PaymentMethod
-  }) {
-    setProducts((prev) =>
-      prev.map((p) => (cart[p.id] ? { ...p, stock: p.stock - cart[p.id] } : p)),
-    )
-    setNotice({
-      total: Math.max(total - details.discount, 0),
-      method: details.method,
-      customerName: details.customerName,
-    })
+  // Dipanggil setelah transaksi berhasil dikonfirmasi dari PaymentModal
+  function handleConfirmPayment() {
+    setNotice({ total })
     setCart({})
     setIsPaying(false)
+    fetchProducts() // Perbarui stok produk dari database
+
     if (noticeTimer.current) clearTimeout(noticeTimer.current)
     noticeTimer.current = setTimeout(() => setNotice(null), 4000)
   }
+
+  // Mapping item keranjang sesuai skema FastAPI (product_id & quantity)
+  const formattedCartItems = useMemo(
+    () =>
+      cartItems.map((item) => ({
+        product_id: Number(item.product.id),
+        quantity: item.quantity,
+      })),
+    [cartItems],
+  )
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row lg:h-dvh">
       <Sidebar activeHref="/" />
 
       <div className="flex min-w-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
-      <Catalog
-        products={filteredProducts}
-        cart={cart}
-        search={search}
-        onSearchChange={setSearch}
-        category={category}
-        onCategoryChange={setCategory}
-        onAdd={addToCart}
-      />
+        <Catalog
+          products={filteredProducts}
+          cart={cart}
+          search={search}
+          onSearchChange={setSearch}
+          category={category}
+          onCategoryChange={setCategory}
+          onAdd={addToCart}
+        />
 
-      <CartPanel
-        ref={cartRef}
-        items={cartItems}
-        total={total}
-        itemCount={itemCount}
-        onIncrement={(p) => setQuantity(p, (cart[p.id] ?? 0) + 1)}
-        onDecrement={(p) => setQuantity(p, (cart[p.id] ?? 0) - 1)}
-        onRemove={removeFromCart}
-        onClear={() => setCart({})}
-        onPay={() => setIsPaying(true)}
-      />
+        <CartPanel
+          ref={cartRef}
+          items={cartItems}
+          total={total}
+          itemCount={itemCount}
+          onIncrement={(p) => setQuantity(p, (cart[p.id] ?? 0) + 1)}
+          onDecrement={(p) => setQuantity(p, (cart[p.id] ?? 0) - 1)}
+          onRemove={removeFromCart}
+          onClear={() => setCart({})}
+          onPay={() => setIsPaying(true)}
+        />
 
-      {itemCount > 0 && (
-        <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 p-3 backdrop-blur lg:hidden">
-          <button
-            type="button"
-            onClick={() => cartRef.current?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex w-full items-center justify-between rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
-          >
-            <span className="flex items-center gap-2">
-              <ShoppingBag className="size-4" aria-hidden="true" />
-              {itemCount} item{itemCount > 1 ? 's' : ''}
-            </span>
-            <span className="font-mono">{formatIDR(total)}</span>
-          </button>
-        </div>
-      )}
+        {itemCount > 0 && (
+          <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 p-3 backdrop-blur lg:hidden">
+            <button
+              type="button"
+              onClick={() => cartRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex w-full items-center justify-between rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingBag className="size-4" aria-hidden="true" />
+                {itemCount} item{itemCount > 1 ? 's' : ''}
+              </span>
+              <span className="font-mono">{formatIDR(total)}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {isPaying && (
         <PaymentModal
           total={total}
           itemCount={itemCount}
+          cartItems={formattedCartItems}
           onClose={() => setIsPaying(false)}
           onConfirm={handleConfirmPayment}
         />
@@ -155,9 +176,7 @@ export function PosDashboard() {
             <div>
               <p className="font-medium">Payment successful</p>
               <p className="text-muted-foreground">
-                <span className="font-mono text-foreground">{formatIDR(notice.total)}</span> via{' '}
-                {notice.method}
-                {notice.customerName ? ` · ${notice.customerName}` : ''}
+                <span className="font-mono text-foreground">{formatIDR(notice.total)}</span>
               </p>
             </div>
           </div>

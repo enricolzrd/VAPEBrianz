@@ -117,5 +117,6 @@ const dateFormatter = new Intl.DateTimeFormat('id-ID', {
 })
 
 export function formatDate(isoDate: string) {
-  return dateFormatter.format(new Date(`${isoDate}T00:00:00Z`))
+  if (!isoDate) return "-"; // Mencegah crash fatal
+  return dateFormatter.format(new Date(isoDate))
 }
