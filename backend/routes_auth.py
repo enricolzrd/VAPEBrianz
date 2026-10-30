@@ -41,6 +41,24 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role or "kasir",
     }
 
+@router.get("/users")
+def get_users(db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
+    users = db.query(User).order_by(User.id).all()
+    return {
+        "data": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "name": u.name,
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.is_active,
+            }
+            for u in users
+        ]
+    }
+
+
 @router.post("/register")
 def register(body: RegisterRequest, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     # Cek username ganda menggunakan SQLAlchemy
@@ -56,8 +74,8 @@ def register(body: RegisterRequest, db: Session = Depends(get_db), current_user:
         password_hash=hashed_pwd,
         role=body.role,
         is_active=True,
-        name=None,
-        email=None
+        name=body.name,
+        email=body.email
     )
 
     # Masukkan ke database

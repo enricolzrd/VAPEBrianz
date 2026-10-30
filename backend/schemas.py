@@ -35,3 +35,5 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     role: Optional[str] = "kasir"
+    name: Optional[str] = None
+    email: Optional[str] = None

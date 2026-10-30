@@ -1,4 +1,6 @@
 annotated-doc==0.0.5
+psycopg2-binary==2.9.13
+sqlalchemy==2.1.6
 annotated-types==0.8.0
 anyio==4.15.1
 bcrypt==5.0.0

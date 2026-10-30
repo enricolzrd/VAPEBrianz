@@ -30,7 +30,7 @@ export function PosDashboard() {
 
   // Fungsi untuk mengambil data produk dari FastAPI dengan Token JWT
   const fetchProducts = useCallback(async () => {
-    const token = localStorage.getItem('token') // Ambil token dari browser
+    const token = localStorage.getItem('vb_token') // Ambil token dari browser
     try {
       const response = await fetch('http://127.0.0.1:8000/api/products', {
         headers: {

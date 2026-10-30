@@ -2,24 +2,36 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/utils'
+import { getUser } from '@/lib/api'
 import { CategoriesTab } from './categories-tab'
 import { ProductsTab } from './products-tab'
+import { UsersTab } from './users-tab'
 
-const TABS = [
-  { id: 'products', label: 'Products' },
-  { id: 'categories', label: 'Categories' },
-] as const
-type TabId = (typeof TABS)[number]['id']
+type TabId = 'products' | 'categories' | 'users'
 
 export function MasterData() {
   const [activeTab, setActiveTab] = useState<TabId>('products')
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
-  const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ products: null, categories: null })
+  const [users, setUsers] = useState<any[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Deteksi role setelah mount — localStorage hanya tersedia di browser
+  useEffect(() => {
+    const currentUser = getUser()
+    setIsAdmin(currentUser?.role === 'admin')
+  }, [])
+
+  const TABS = [
+    { id: 'products' as TabId, label: 'Products' },
+    { id: 'categories' as TabId, label: 'Categories' },
+    ...(isAdmin ? [{ id: 'users' as TabId, label: 'Users' }] : []),
+  ]
+  const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ products: null, categories: null, users: null })
 
   // --- 1. FUNGSI TARIK DATA (GET) ---
   async function fetchMasterData() {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('vb_token')
     const headers = { 'Authorization': `Bearer ${token}` }
     try {
       const [prodRes, catRes] = await Promise.all([
@@ -35,9 +47,28 @@ export function MasterData() {
     }
   }
 
+  async function fetchUsers() {
+    const token = localStorage.getItem('vb_token')
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/auth/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setUsers(data.data ?? data ?? [])
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data users:", error)
+    }
+  }
+
   useEffect(() => {
     fetchMasterData()
   }, [])
+
+  useEffect(() => {
+    if (isAdmin) fetchUsers()
+  }, [isAdmin])
 
   const productCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -48,7 +79,7 @@ export function MasterData() {
     return counts
   }, [products])
 
-  const counts: Record<TabId, number> = { products: products.length, categories: categories.length }
+  const counts: Record<TabId, number> = { products: products.length, categories: categories.length, users: users.length }
 
   function handleTabKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
@@ -62,7 +93,7 @@ export function MasterData() {
   // --- HELPER UNTUK HEADER API ---
   const getApiHeaders = () => ({
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
+    'Authorization': `Bearer ${localStorage.getItem('vb_token')}`
   })
 
   // --- 2. FUNGSI PRODUK (POST, PUT, DELETE) ---
@@ -190,20 +221,22 @@ export function MasterData() {
       >
         {activeTab === 'products' ? (
           <ProductsTab
-            // Hapus baris products={products} di sini jika file produk tab Anda merah
+            products={products}
             categories={categories}
             onAdd={handleAddProduct}
             onUpdate={handleUpdateProduct}
             onDelete={handleDeleteProduct}
           />
-        ) : (
+        ) : activeTab === 'categories' ? (
           <CategoriesTab
-            // Hapus baris categories={categories} di sini jika file kategori tab Anda merah
+            categories={categories}
             productCounts={productCounts}
             onAdd={handleAddCategory}
             onRename={handleRenameCategory}
             onDelete={handleDeleteCategory}
           />
+        ) : (
+          <UsersTab users={users} onRefresh={fetchUsers} />
         )}
       </div>
     </main>

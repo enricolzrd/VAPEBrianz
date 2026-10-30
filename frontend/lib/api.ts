@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURASI BASE URL BACKEND
 // ==========================================
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
 
 // ==========================================
 // HELPER: AMBIL TOKEN DARI LOCALSTORAGE
@@ -74,6 +74,34 @@ export async function apiFetch(
   }
 
   return response
+}
+
+// ==========================================
+// FUNGSI REGISTER (ADMIN ONLY)
+// ==========================================
+export async function registerUser(payload: {
+  username: string
+  password: string
+  role: string
+  name?: string
+  email?: string
+}): Promise<{ success: boolean; message?: string }> {
+  try {
+    const response = await apiFetch("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return { success: false, message: data.detail || "Registrasi gagal" }
+    }
+
+    return { success: true, message: data.message }
+  } catch {
+    return { success: false, message: "Tidak dapat terhubung ke server" }
+  }
 }
 
 // ==========================================

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { MasterCategory } from '@/lib/master-data'
 import { cn } from '@/lib/utils'
 import { CategoryFormModal } from './category-form-modal'
@@ -8,6 +8,7 @@ import { ConfirmDeleteModal } from './confirm-delete-modal'
 import { ActionBar, EmptyRow, RowActions, tdClass, thClass } from './table-parts'
 
 type CategoriesTabProps = {
+  categories: MasterCategory[]
   productCounts: Map<string, number>
   onAdd: (name: string) => void
   onRename: (id: string, name: string) => void
@@ -20,29 +21,15 @@ type ModalState =
   | { type: 'delete'; category: MasterCategory }
   | null
 
-export function CategoriesTab({ productCounts, onAdd, onRename, onDelete }: CategoriesTabProps) {
-  const [categories, setCategories] = useState<MasterCategory[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+export function CategoriesTab({ categories: rawCategories, productCounts, onAdd, onRename, onDelete }: CategoriesTabProps) {
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<ModalState>(null)
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const token = localStorage.getItem('token')
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/categories', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const result = await response.json()
-        setCategories(result.data ?? [])
-      } catch (error) {
-        console.error('Gagal mengambil kategori:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchCategories()
-  }, [])
+  // Normalize backend fields ke MasterCategory shape
+  const categories: MasterCategory[] = rawCategories.map((c) => ({
+    id: String(c.id),
+    name: c.name,
+  }))
 
   const query = search.trim().toLowerCase()
   const filtered = query ? categories.filter((c) => c.name.toLowerCase().includes(query)) : categories
@@ -73,13 +60,7 @@ export function CategoriesTab({ productCounts, onAdd, onRename, onDelete }: Cate
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr>
-                  <td colSpan={3} className="py-8 text-center text-muted-foreground">
-                    Memuat kategori...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <EmptyRow colSpan={3} message={query ? `No categories match "${search.trim()}".` : 'No categories yet.'} />
               ) : (
                 filtered.map((c) => {

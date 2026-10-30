@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
-import { Database, History, ShoppingCart, type LucideIcon } from 'lucide-react'
+import { Database, History, LogOut, ShoppingCart, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { removeToken, getUser } from '@/lib/api'
 
 type NavItem = {
   label: string
@@ -15,6 +18,14 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export function Sidebar({ activeHref = '/' }: { activeHref?: string }) {
+  const user = getUser()
+  const initials = user?.username?.slice(0, 2).toUpperCase() ?? 'VB'
+
+  function handleLogout() {
+    removeToken()
+    window.location.href = '/login'
+  }
+
   return (
     <aside className="z-30 border-b border-border bg-card md:sticky md:top-0 md:flex md:h-dvh md:w-16 md:shrink-0 md:flex-col md:border-b-0 md:border-r xl:w-60">
       <div className="hidden h-[73px] items-center gap-2.5 border-b border-border px-4 md:flex md:justify-center xl:justify-start">
@@ -66,23 +77,32 @@ export function Sidebar({ activeHref = '/' }: { activeHref?: string }) {
         </ul>
       </nav>
 
+      {/* User info + Logout */}
       <div className="hidden border-t border-border p-3 md:block">
         <div className="flex items-center gap-3 rounded-lg px-1 py-1.5 md:justify-center xl:justify-start xl:px-2">
           <div
             aria-hidden="true"
             className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold"
           >
-            BR
+            {initials}
           </div>
-          <div className="hidden min-w-0 leading-tight xl:block">
-            <p className="truncate text-sm font-medium">Brian</p>
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
-              Shift open
-            </p>
+          <div className="hidden min-w-0 flex-1 leading-tight xl:block">
+            <p className="truncate text-sm font-medium">{user?.username ?? '—'}</p>
+            <p className="text-xs capitalize text-muted-foreground">{user?.role ?? ''}</p>
           </div>
+          {/* Tombol logout — ikon saja di mode collapsed, ikon+teks di mode expanded */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Logout"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            <span className="sr-only">Logout</span>
+          </button>
         </div>
       </div>
     </aside>
   )
 }
+

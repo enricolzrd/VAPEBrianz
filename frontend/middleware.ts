@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   // Ambil token dari Cookies yang diset dari halaman login
-  const token = request.cookies.get('token')?.value
+  const token = request.cookies.get('vb_token')?.value
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
 
   // Jika tidak ada token dan user mencoba mengakses dashboard, tendang ke login

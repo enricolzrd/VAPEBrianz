@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatIDR } from '@/lib/pos-data'
 import { LOW_STOCK_THRESHOLD, type MasterCategory, type MasterProduct, type ProductInput } from '@/lib/master-data'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { ProductFormModal } from './product-form-modal'
 import { ActionBar, EmptyRow, RowActions, tdClass, thClass } from './table-parts'
 
 type ProductsTabProps = {
+  products: any[]
   categories: MasterCategory[]
   onAdd: (values: ProductInput) => void
   onUpdate: (id: string, values: ProductInput) => void
@@ -21,29 +22,18 @@ type ModalState =
   | { type: 'delete'; product: MasterProduct }
   | null
 
-export function ProductsTab({ categories, onAdd, onUpdate, onDelete }: ProductsTabProps) {
-  const [products, setProducts] = useState<MasterProduct[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+export function ProductsTab({ products: rawProducts, categories, onAdd, onUpdate, onDelete }: ProductsTabProps) {
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<ModalState>(null)
 
-  useEffect(() => {
-    async function fetchProducts() {
-      const token = localStorage.getItem('token')
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/products', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const result = await response.json()
-        setProducts(result.data ?? [])
-      } catch (error) {
-        console.error('Gagal mengambil produk:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchProducts()
-  }, [])
+  // Normalize backend snake_case fields ke MasterProduct shape
+  const products: MasterProduct[] = rawProducts.map((p) => ({
+    id: String(p.id),
+    name: p.name,
+    categoryId: String(p.category_id ?? p.categoryId ?? p.category?.id ?? ''),
+    price: Number(p.price),
+    stock: Number(p.stock),
+  }))
 
   const categoryNames = useMemo(
     () => new Map(categories.map((c) => [c.id, c.name])),
@@ -84,13 +74,7 @@ export function ProductsTab({ categories, onAdd, onUpdate, onDelete }: ProductsT
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                    Memuat produk...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <EmptyRow colSpan={5} message={query ? `No products match "${search.trim()}".` : 'No products yet.'} />
               ) : (
                 filtered.map((p) => (

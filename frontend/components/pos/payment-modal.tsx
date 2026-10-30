@@ -55,7 +55,7 @@ export function PaymentModal({
     e.preventDefault()
     setIsSubmitting(true)
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('vb_token')
 
     try {
       const response = await fetch('http://127.0.0.1:8000/api/transactions', {

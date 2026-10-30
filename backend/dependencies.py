@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 security = HTTPBearer()
-SECRET_KEY = os.getenv("SECRET_KEY", "vapebrianz-super-secret-jwt-key-2026")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "vapebrianz-super-secret-jwt-key-2026")
 ALGORITHM = "HS256"
 
 # Middleware JWT: Membaca dan memvalidasi token

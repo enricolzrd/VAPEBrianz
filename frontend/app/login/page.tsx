@@ -47,8 +47,9 @@ export default function LoginPage() {
         }
 
         // Jika token benar-benar ada, baru simpan dan pindah halaman
-        localStorage.setItem('token', tokenAsli)
-        document.cookie = `token=${tokenAsli}; path=/; max-age=86400`
+        localStorage.setItem('vb_token', tokenAsli)
+        localStorage.setItem('vb_user', JSON.stringify({ username: data.username || username, role: data.role || 'kasir' }))
+        document.cookie = `vb_token=${tokenAsli}; path=/; max-age=${8 * 60 * 60}; SameSite=Strict`
         window.location.href = '/'
         
       } else {
