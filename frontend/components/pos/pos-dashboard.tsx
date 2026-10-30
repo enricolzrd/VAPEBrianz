@@ -6,7 +6,6 @@ import {
   formatIDR,
   type CartItem,
   type Category,
-  type PaymentMethod,
   type Product,
 } from '@/lib/pos-data'
 import { Catalog } from './catalog'
@@ -28,23 +27,27 @@ export function PosDashboard() {
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cartRef = useRef<HTMLElement>(null)
 
-  // Fungsi untuk mengambil data produk dari FastAPI dengan Token JWT
   const fetchProducts = useCallback(async () => {
-    const token = localStorage.getItem('vb_token') // Ambil token dari browser
+    const token = localStorage.getItem('vb_token')
     try {
       const response = await fetch('http://127.0.0.1:8000/api/products', {
-        headers: {
-          'Authorization': `Bearer ${token}` // Lampirkan token ke backend
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       const result = await response.json()
-      setProducts(result.data ?? [])
+      // Normalize: id → string, category object → string nama
+      const normalized = (result.data ?? []).map((p: any) => ({
+        id: String(p.id),
+        name: p.name,
+        category: p.category?.name ?? p.category ?? '',
+        price: Number(p.price),
+        stock: Number(p.stock),
+      }))
+      setProducts(normalized)
     } catch (error) {
       console.error('Gagal menarik data produk:', error)
     }
   }, [])
 
-  // Tarik data produk otomatis saat komponen dimuat
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
@@ -94,18 +97,16 @@ export function PosDashboard() {
     })
   }
 
-  // Dipanggil setelah transaksi berhasil dikonfirmasi dari PaymentModal
   function handleConfirmPayment() {
     setNotice({ total })
     setCart({})
     setIsPaying(false)
-    fetchProducts() // Perbarui stok produk dari database
+    fetchProducts()
 
     if (noticeTimer.current) clearTimeout(noticeTimer.current)
     noticeTimer.current = setTimeout(() => setNotice(null), 4000)
   }
 
-  // Mapping item keranjang sesuai skema FastAPI (product_id & quantity)
   const formattedCartItems = useMemo(
     () =>
       cartItems.map((item) => ({

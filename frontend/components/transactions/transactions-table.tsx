@@ -26,10 +26,11 @@ function MethodBadge({ method }: { method: PaymentMethod }) {
 
 type TransactionsTableProps = {
   transactions: Transaction[]
+  totalFiltered: number
   onSelect: (transaction: Transaction) => void
 }
 
-export function TransactionsTable({ transactions, onSelect }: TransactionsTableProps) {
+export function TransactionsTable({ transactions, totalFiltered, onSelect }: TransactionsTableProps) {
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-16 text-center">
@@ -40,6 +41,7 @@ export function TransactionsTable({ transactions, onSelect }: TransactionsTableP
     )
   }
 
+  // Grand total hanya untuk halaman ini (per page)
   const grandTotal = transactions.reduce((sum, t) => sum + t.total, 0)
 
   return (
@@ -107,7 +109,7 @@ export function TransactionsTable({ transactions, onSelect }: TransactionsTableP
           <tfoot>
             <tr className="border-t border-border bg-secondary/40">
               <th scope="row" colSpan={3} className="px-4 py-3 text-left font-medium text-muted-foreground">
-                {transactions.length} transaction{transactions.length > 1 ? 's' : ''}
+                {transactions.length} of {totalFiltered} transaction{totalFiltered > 1 ? 's' : ''}
               </th>
               <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-primary">
                 {formatIDR(grandTotal)}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useEffectEvent, useId, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { Printer, X } from 'lucide-react'
 import { formatIDR } from '@/lib/pos-data'
 import { formatDate, type Transaction } from '@/lib/transactions-data'
@@ -26,24 +26,25 @@ function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
 export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
-  const itemCount = transaction.items.reduce((sum, item) => sum + item.quantity, 0)
-
-  const handleEscape = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  })
+  const itemCount = transaction.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
     closeRef.current?.focus()
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleEscape)
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+
     return () => {
       document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleEscape)
+      window.removeEventListener('keydown', onKeyDown)
       previouslyFocused?.focus()
     }
-  }, [])
+  }, [onClose])
 
   return (
     <div className="receipt-print-root fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-4">
@@ -87,49 +88,47 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
             <Divider />
 
-            <table className="w-full font-mono text-xs">
-              <caption className="sr-only">Purchased items</caption>
-              <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-muted-foreground print:text-black/60">
-                  <th scope="col" className="pb-2 text-left font-medium">
-                    Item
-                  </th>
-                  <th scope="col" className="pb-2 text-center font-medium">
-                    Qty
-                  </th>
-                  <th scope="col" className="pb-2 text-right font-medium">
-                    Price
-                  </th>
-                  <th scope="col" className="pb-2 text-right font-medium">
-                    Subtotal
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="align-top">
-                {transaction.items.map((item) => (
-                  <tr key={item.name}>
-                    <th scope="row" className="py-1.5 pr-2 text-left font-sans text-[13px] font-medium leading-snug">
-                      {item.name}
-                    </th>
-                    <td className="py-1.5 text-center text-muted-foreground print:text-black">
-                      {item.quantity}
-                    </td>
-                    <td className="whitespace-nowrap py-1.5 pl-2 text-right text-muted-foreground print:text-black">
-                      {formatIDR(item.unitPrice)}
-                    </td>
-                    <td className="whitespace-nowrap py-1.5 pl-2 text-right">
-                      {formatIDR(item.quantity * item.unitPrice)}
-                    </td>
+            {(!transaction.items || transaction.items.length === 0) ? (
+              <p className="py-4 text-center text-xs text-muted-foreground">
+                Detail item tidak tersedia.
+              </p>
+            ) : (
+              <table className="w-full font-mono text-xs">
+                <caption className="sr-only">Purchased items</caption>
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wider text-muted-foreground print:text-black/60">
+                    <th scope="col" className="pb-2 text-left font-medium">Item</th>
+                    <th scope="col" className="pb-2 text-center font-medium">Qty</th>
+                    <th scope="col" className="pb-2 text-right font-medium">Price</th>
+                    <th scope="col" className="pb-2 text-right font-medium">Subtotal</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="align-top">
+                  {transaction.items.map((item, idx) => (
+                    <tr key={`${item.name}-${idx}`}>
+                      <th scope="row" className="py-1.5 pr-2 text-left font-sans text-[13px] font-medium leading-snug">
+                        {item.name}
+                      </th>
+                      <td className="py-1.5 text-center text-muted-foreground print:text-black">
+                        {item.quantity}
+                      </td>
+                      <td className="whitespace-nowrap py-1.5 pl-2 text-right text-muted-foreground print:text-black">
+                        {formatIDR(item.unitPrice)}
+                      </td>
+                      <td className="whitespace-nowrap py-1.5 pl-2 text-right">
+                        {formatIDR(item.quantity * item.unitPrice)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
 
             <Divider />
 
             <dl className="flex flex-col gap-2 font-mono text-xs">
               <MetaRow
-                label={`Subtotal (${itemCount} item${itemCount > 1 ? 's' : ''})`}
+                label={`Subtotal (${itemCount} item${itemCount !== 1 ? 's' : ''})`}
                 value={formatIDR(transaction.subtotal)}
               />
               <MetaRow

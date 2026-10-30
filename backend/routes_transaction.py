@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["Transactions"])
 def create_transaction(
     trx: TransactionCreate, 
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user) # <--- Wajib tambahkan parameter ini
+    current_user: dict = Depends(get_current_user)
 ):
     invoice_number = f"VB-{datetime.now().strftime('%y%m%d-%H%M%S')}"
     
@@ -46,10 +46,9 @@ def create_transaction(
 
         total_amount = subtotal - trx.discount_amount
 
-        # Pembuatan header transaksi
         new_transaction = Transaction(
             invoice_number=invoice_number,
-            user_id=current_user["user_id"], # <--- Ubah trx.user_id menjadi current_user["user_id"]
+            user_id=current_user["user_id"],
             customer_name=trx.customer_name,
             subtotal=subtotal,
             discount_amount=trx.discount_amount,
@@ -77,7 +76,6 @@ def create_transaction(
 
 @router.get("/transactions")
 def get_transaction_history(db: Session = Depends(get_db)):
-    # Menggunakan joinedload untuk mengambil data profil user sekaligus (seperti users(username) di Supabase)
     stmt = (
         select(Transaction)
         .options(joinedload(Transaction.user)) 
@@ -88,7 +86,6 @@ def get_transaction_history(db: Session = Depends(get_db)):
 
 @router.get("/transactions/{transaction_id}")
 def get_transaction_details(transaction_id: int, db: Session = Depends(get_db)):
-    # Menggunakan joinedload untuk menarik data nama produk dari item transaksi
     stmt = (
         select(TransactionDetail)
         .options(joinedload(TransactionDetail.product))

@@ -16,7 +16,6 @@ export function MasterData() {
   const [users, setUsers] = useState<any[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // Deteksi role setelah mount — localStorage hanya tersedia di browser
   useEffect(() => {
     const currentUser = getUser()
     setIsAdmin(currentUser?.role === 'admin')
@@ -29,7 +28,6 @@ export function MasterData() {
   ]
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ products: null, categories: null, users: null })
 
-  // --- 1. FUNGSI TARIK DATA (GET) ---
   async function fetchMasterData() {
     const token = localStorage.getItem('vb_token')
     const headers = { 'Authorization': `Bearer ${token}` }
@@ -90,13 +88,11 @@ export function MasterData() {
     tabRefs.current[next]?.focus()
   }
 
-  // --- HELPER UNTUK HEADER API ---
   const getApiHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('vb_token')}`
   })
 
-  // --- 2. FUNGSI PRODUK (POST, PUT, DELETE) ---
   async function handleAddProduct(values: any) {
     try {
       const res = await fetch('http://127.0.0.1:8000/api/products', {
@@ -132,7 +128,6 @@ export function MasterData() {
     } catch (e) { console.error(e) }
   }
 
-  // --- 3. FUNGSI KATEGORI (POST, PUT, DELETE) ---
   async function handleAddCategory(name: string) {
     try {
       const res = await fetch('http://127.0.0.1:8000/api/categories', {
